@@ -29,6 +29,9 @@ class Color
      */
     public function __construct($resource, int $red, int $green, int $blue, ?int $alpha = NULL)
     {
+        if (!is_resource($resource))
+            throw new GraphicsException('Invalid resource.');
+
         $color = $alpha == NULL ?
             @imagecolorallocate($resource, $red, $green, $blue) :
             @imagecolorallocatealpha($resource, $red, $green, $blue, $alpha);
@@ -36,11 +39,13 @@ class Color
         if ($color === FALSE)
             throw new GraphicsException('Unable to allocate color.');
 
+        $this->resource = $resource;
+
         $this->red = $red;
         $this->green = $green;
         $this->blue = $blue;
         $this->alpha = $alpha;
-        $this->resource = $resource;
+
         $this->id = $color;
     }
 
