@@ -278,6 +278,68 @@ abstract class Image
     }
 
     /**
+     * Allocate color on image based on ARGB.
+     *
+     * @param int $red Can be between 0 and 255.
+     * @param int $green Can be between 0 and 255.
+     * @param int $blue Can be between 0 and 255.
+     * @param int $alpha Can be between 0 and 255.
+     *
+     * @return Color
+     *
+     * @throws GraphicsException
+     */
+    public function colorFromARGB(int $red, int $green, int $blue, int $alpha): Color
+    {
+        return new Color($this->resource, $red, $green, $blue, $alpha);
+    }
+
+    /**
+     * Allocate color on image based on RGB.
+     *
+     * @param int $red Can be between 0 and 255.
+     * @param int $green Can be between 0 and 255.
+     * @param int $blue Can be between 0 and 255.
+     *
+     * @return Color
+     *
+     * @throws GraphicsException
+     */
+    public function colorFromRGB(int $red, int $green, int $blue): Color
+    {
+        return new Color($this->resource, $red, $green, $blue);
+    }
+
+    /**
+     * Allocate color on image based on Hex value.
+     *
+     * @param string $hex Can be between #000000 and #FFFFFF or #00000000 and #FFFFFFFF.
+     *
+     * @return Color
+     *
+     * @throws GraphicsException
+     */
+    public function colorFromHex(string $hex): Color
+    {
+        if (preg_match('/^\s*#?\s*(?<r>[0-9A-F]{2})(?<g>[0-9A-F]{2})(?<b>[0-9A-F]{2})\s*$/i', $hex, $rgb) === 1) {
+            $r = hexdec($rgb['r']);
+            $g = hexdec($rgb['g']);
+            $b = hexdec($rgb['b']);
+
+            return new Color($this->resource, $r, $g, $b);
+        } else if (preg_match('/^\s*#?\s*(?<a>[0-9A-F]{2})(?<r>[0-9A-F]{2})(?<g>[0-9A-F]{2})(?<b>[0-9A-F]{2})\s*$/i', $hex, $rgb)) {
+            // convert hex alpha to PHP alpha
+            $a = 127 - ceil((127 * hexdec($rgb['a']) / 255));
+            $r = hexdec($rgb['r']);
+            $g = hexdec($rgb['g']);
+            $b = hexdec($rgb['b']);
+
+            return new Color($this->resource, $r, $g, $b, $a);
+        } else
+            throw new GraphicsException('Unable to create color from Hex.');
+    }
+
+    /**
      * Copy the internal resource as a new resource.
      *
      * @resource
@@ -306,10 +368,10 @@ abstract class Image
      */
     public function round($radius): Image
     {
-        imageantialias($this->resource, true);
+        imageantialias($this->resource, TRUE);
         imagecolortransparent($this->resource, imagecolorallocatealpha($this->resource, 0, 0, 0, 127));
-        imagealphablending($this->resource, true);
-        imagesavealpha($this->resource, false);
+        imagealphablending($this->resource, TRUE);
+        imagesavealpha($this->resource, FALSE);
 
         $corner = self::generateCorner($radius, @imageistruecolor($this->resource));
 
@@ -329,6 +391,27 @@ abstract class Image
         @imagecopymerge($this->resource, $corner, 0, $this->height - $radius, 0, 0, $radius, $radius, 100);
 
         @imagedestroy($corner);
+
+        return $this;
+    }
+
+    /**
+     * Draw text on image.
+     *
+     * @param string $text
+     * @param int $x
+     * @param int $y
+     * @param Color $color
+     * @param int $font Can be 1, 2, 3, 4, 5 for built-in fonts in latin2 encoding (where higher numbers corresponding to larger fonts).
+     *
+     * @return Image
+     *
+     * @throws GraphicsException
+     */
+    public function drawText(string $text, int $x, int $y, Color $color, int $font = 1): Image
+    {
+        if (imagestring($this->resource, $font, $x, $y, $text, $color->getId()) === FALSE)
+            throw new GraphicsException('Unable to write text on image.');
 
         return $this;
     }
