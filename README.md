@@ -8,6 +8,10 @@ A PHP GD library to process true color images.
 
 composer require antoniokadid/php-graphics
 
+## Requirements
+* PHP 7.1
+* GD Extension
+
 ## Features
 
 #### Images
@@ -61,4 +65,4 @@ Image::fromFile('test.jpg')
 
 ## LICENSE
 
-php-colors is released under MIT licence.
+php-colors is released under MIT license.
