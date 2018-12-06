@@ -23,7 +23,6 @@ composer require antoniokadid/php-graphics
   * JPEG
   * BMP
   * PNG
-  * WEBP
 * Method chaining.
 
 #### Colors

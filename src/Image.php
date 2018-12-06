@@ -473,29 +473,4 @@ class Image
 
         return @imagepng($this->resource, $to, $quality, $filters);
     }
-
-    /**
-     * Output as WEBP.
-     *
-     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
-     * @param int $quality From 0 (worst quality, smaller file) to 100 (best quality, biggest file).
-     *
-     * @return bool
-     */
-    public function asWebp($to = NULL, int $quality = 75): bool
-    {
-        if ($quality < 0)
-            $quality = 0;
-        else if ($quality > 100)
-            $quality = 100;
-
-        if ($to == NULL) {
-            if (ob_get_length() !== FALSE)
-                ob_clean();
-            header_remove('Content-Type');
-            header('Content-Type: image/webp');
-        }
-
-        return @imagewebp($this->resource, $to, $quality);
-    }
 }
