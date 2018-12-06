@@ -2,27 +2,63 @@
 
 namespace Graphics;
 
+use InvalidArgumentException;
+
 /**
  * Class Image
  *
  * @package Graphics
  */
-abstract class Image
+class Image
 {
     /** @var int */
     protected $width;
     /** @var int */
     protected $height;
-    /** @var int */
-    protected $type;
     /** @var float */
     protected $ratio;
+    /** @var int */
+    protected $type;
     /** @var resource */
     protected $resource;
 
+    /**
+     * Image constructor.
+     *
+     * @param int $width
+     * @param int $height
+     * @param resource|NULL $resource
+     * @param int $type
+     */
+    public function __construct(int $width = 0, int $height = 0, $resource = NULL, int $type = IMAGETYPE_UNKNOWN)
+    {
+        if (is_resource($resource)) {
+            $this->resource = $resource;
+            $this->type = $type;
+            $this->width = @imagesx($resource);
+            $this->height = @imagesy($resource);
+            $this->ratio = $this->width / $this->height;
+        } else {
+            if ($width <= 0)
+                throw new InvalidArgumentException('Width cannot be less than or equal to 0.');
+
+            if ($height <= 0)
+                throw new InvalidArgumentException('Height cannot be less than or equal to 0.');
+
+            $this->resource = @imagecreatetruecolor($width, $height);
+            $this->type = $type;
+            $this->width = @imagesx($this->resource);
+            $this->height = @imagesy($this->resource);
+            $this->ratio = $this->width / $this->height;
+        }
+
+        @imagealphablending($this->resource, FALSE);
+        @imagesavealpha($this->resource, TRUE);
+    }
+
     public function __destruct()
     {
-        if ($this->resource != NULL && is_resource($this->resource))
+        if (is_resource($this->resource))
             @imagedestroy($this->resource);
     }
 
@@ -43,6 +79,14 @@ abstract class Image
     }
 
     /**
+     * @return float
+     */
+    public function getRatio(): float
+    {
+        return $this->ratio;
+    }
+
+    /**
      * @return int
      */
     public function getType(): int
@@ -51,11 +95,30 @@ abstract class Image
     }
 
     /**
-     * @return float
+     * Create a new blank image.
+     *
+     * @param int $width
+     * @param int $height
+     * @param int $type
+     *
+     * @return Image
      */
-    public function getRatio(): float
+    public static function blank(int $width, int $height, int $type = IMAGETYPE_UNKNOWN): Image
     {
-        return $this->ratio;
+        return new Image($width, $height, NULL, $type);
+    }
+
+    /**
+     * Use an existing resource as an image.
+     *
+     * @param $resource
+     * @param int $type
+     *
+     * @return Image
+     */
+    public static function fromResource($resource, int $type = IMAGETYPE_UNKNOWN)
+    {
+        return new Image(0, 0, $resource, $type);
     }
 
     /**
@@ -65,7 +128,7 @@ abstract class Image
      *
      * @throws GraphicsException
      */
-    public static function FromFile($filename): Image
+    public static function fromFile($filename): Image
     {
         if (!file_exists($filename))
             throw new GraphicsException(sprintf('%s does not exist.', $filename));
@@ -74,7 +137,7 @@ abstract class Image
         $data = fread($handle, filesize($filename));
         fclose($handle);
 
-        return self::FromData($data);
+        return self::fromData($data);
     }
 
     /**
@@ -84,13 +147,13 @@ abstract class Image
      *
      * @throws GraphicsException
      */
-    public static function FromBase64(string $base64): Image
+    public static function fromBase64(string $base64): Image
     {
         $data = base64_decode($base64);
         if ($data === FALSE)
             throw new GraphicsException('Unable to read Base64 data.');
 
-        return self::FromData($data);
+        return self::fromData($data);
     }
 
     /**
@@ -100,10 +163,10 @@ abstract class Image
      *
      * @throws GraphicsException
      */
-    public static function FromData(string $data): Image
+    public static function fromData(string $data): Image
     {
-        $imageResource = @imagecreatefromstring($data);
-        if ($imageResource === FALSE)
+        $resource = @imagecreatefromstring($data);
+        if ($resource === FALSE)
             throw new GraphicsException('Unable to process image data.');
 
         $size = getimagesizefromstring($data, $info);
@@ -112,75 +175,42 @@ abstract class Image
 
         list($width, $height, $type, $attr) = $size;
 
-        switch ($type) {
-            case IMAGETYPE_BMP:
-                return new BitmapImage($width, $height, $imageResource);
-            case IMAGETYPE_JPEG:
-                return new JpegImage($width, $height, $imageResource);
-            default:
-                throw new GraphicsException('Invalid image type.');
-        }
+        return new Image($width, $height, $resource, $type);
     }
 
     /**
-     * @param int $width
+     * @return Image
      *
      * @throws GraphicsException
      */
-    private static function validateWidth(int $width): void
+    public function clone(): Image
     {
-        if ($width <= 0)
-            throw new GraphicsException('Width cannot be less or equal to zero.');
+        $image = new Image($this->width, $this->height, NULL, $this->type);
+
+        $result = @imagecopy($image->resource, $this->resource, 0, 0, 0, 0, $this->width, $this->height);
+        if ($result === FALSE)
+            throw new GraphicsException('Unable to copy image.');
+
+        return $image;
     }
 
     /**
-     * @param int $height
+     * Flood fill.
+     *
+     * @param int $color
+     * @param int $x x-coordinate of start point
+     * @param int $y y-coordinate of start point
+     *
+     * @return Image
      *
      * @throws GraphicsException
      */
-    private static function validateHeight(int $height): void
+    public function fill(int $color, int $x = 0, int $y = 0): Image
     {
-        if ($height <= 0)
-            throw new GraphicsException('Height cannot be less or equal to zero.');
-    }
+        if (@imagefill($this->resource, $x, $y, $color) === FALSE)
+            throw new GraphicsException('Unable to fill image.');
 
-    /**
-     * Create a temporary image and produce the top left corner.
-     *
-     * @param int $radius
-     * @param bool $isTrueColor
-     *
-     * @return resource
-     *
-     * @throws GraphicsException
-     */
-    private static function generateCorner(int $radius, bool $isTrueColor)
-    {
-        $corner = $isTrueColor ?
-            @imagecreatetruecolor($radius, $radius) :
-            @imagecreate($radius, $radius);
-
-        if ($corner === FALSE)
-            throw new GraphicsException('Unable to create temporary image.');
-        if (@imageantialias($corner, TRUE) === FALSE)
-            throw new GraphicsException('Unable to activate anti alias.');
-        if (@imagealphablending($corner, FALSE) === FALSE)
-            throw new GraphicsException('Unable to de-activate alpha blending.');
-        if (@imagesavealpha($corner, TRUE) === FALSE)
-            throw new GraphicsException('Unable to activate save alpha.');
-
-        $white = (new Color($corner, 255, 255, 255))->getId();
-        $black = (new Color($corner, 0, 0, 0, 127))->getId();
-
-        @imagecolortransparent($corner, $white);
-
-        // TOP LEFT
-        if (@imagefilledarc($corner, $radius, $radius, $radius * 2, $radius * 2, 180, 270, $white, IMG_ARC_PIE) === FALSE)
-            throw new GraphicsException('Unable to draw arc.');
-        if (@imagefilltoborder($corner, 0, 0, $white, $black) === FALSE)
-            throw new GraphicsException('Unable to fill to border.');
-
-        return $corner;
+        return $this;
     }
 
     /**
@@ -194,11 +224,14 @@ abstract class Image
      */
     public function resizeToWidth(int $width): Image
     {
-        self::validateWidth($width);
-        $this->resize($width, ceil($width / $this->ratio));
+        if ($width <= 0)
+            throw new InvalidArgumentException('Width cannot be less than or equal to 0.');
 
-        return $this;
+        $height = ceil($width / $this->ratio);
+
+        return $this->resize($width, $height);
     }
+
 
     /**
      * Resize an image to the specified height and keep the ratio between width and height.
@@ -211,10 +244,12 @@ abstract class Image
      */
     public function resizeToHeight(int $height): Image
     {
-        self::validateHeight($height);
-        $this->resize(ceil($height * $this->ratio), $height);
+        if ($height <= 0)
+            throw new InvalidArgumentException('Height cannot be less than or equal to 0.');
 
-        return $this;
+        $width = ceil($height * $this->ratio);
+
+        return $this->resize($width, $height);
     }
 
     /**
@@ -229,32 +264,21 @@ abstract class Image
      */
     public function resize(int $width, int $height): Image
     {
-        self::validateWidth($width);
-        $this->validateHeight($height);
+        $image = new Image($width, $height, NULL, $this->type);
 
-        $destinationImage = @imageistruecolor($this->resource) ?
-            @imagecreatetruecolor($width, $height) :
-            @imagecreate($width, $height);
-
-        if ($destinationImage === FALSE)
-            throw new GraphicsException('Unable to create new image.');
-
-        $result = @imagecopyresampled($destinationImage, $this->resource, 0, 0, 0, 0, $width, $height, $this->width, $this->height);
-        if ($result === FALSE)
+        if (@imagecopyresampled($image->resource, $this->resource, 0, 0, 0, 0, $width, $height, $this->width, $this->height) === FALSE)
             throw new GraphicsException('Unable to resize image.');
 
-        $this->init($width, $height, $this->type, $destinationImage);
-
-        return $this;
+        return $image;
     }
 
     /**
      * Crop an image to the specified width and height.
      *
-     * @param int $width The new width of the cropped image.
-     * @param int $height The new height of the cropped image.
-     * @param int $x Optional. Set the position from top left.
-     * @param int $y Optional. Set the position from top left.
+     * @param int $width
+     * @param int $height
+     * @param int $x
+     * @param int $y
      *
      * @return Image
      *
@@ -262,101 +286,17 @@ abstract class Image
      */
     public function crop(int $width, int $height, int $x = 0, int $y = 0): Image
     {
-        self::validateWidth($width);
-        self::validateHeight($height);
+        if ($width <= 0)
+            throw new InvalidArgumentException('Width cannot be less than or equal to 0.');
 
-        $result = imagecrop(
-            $this->resource,
-            ['x' => $x, 'y' => $y, 'width' => $width, 'height' => $height]);
+        if ($height <= 0)
+            throw new InvalidArgumentException('Height cannot be less than or equal to 0.');
 
+        $result = imagecrop($this->resource, ['x' => $x, 'y' => $y, 'width' => $width, 'height' => $height]);
         if ($result === FALSE)
             throw new GraphicsException('Unable to crop image.');
 
-        $this->init($width, $height, $this->type, $result);
-
-        return $this;
-    }
-
-    /**
-     * Allocate color on image based on ARGB.
-     *
-     * @param int $red Can be between 0 and 255.
-     * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
-     * @param int $alpha Can be between 0 and 255.
-     *
-     * @return Color
-     *
-     * @throws GraphicsException
-     */
-    public function colorFromARGB(int $red, int $green, int $blue, int $alpha): Color
-    {
-        return new Color($this->resource, $red, $green, $blue, $alpha);
-    }
-
-    /**
-     * Allocate color on image based on RGB.
-     *
-     * @param int $red Can be between 0 and 255.
-     * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
-     *
-     * @return Color
-     *
-     * @throws GraphicsException
-     */
-    public function colorFromRGB(int $red, int $green, int $blue): Color
-    {
-        return new Color($this->resource, $red, $green, $blue);
-    }
-
-    /**
-     * Allocate color on image based on Hex value.
-     *
-     * @param string $hex Can be between #000000 and #FFFFFF or #00000000 and #FFFFFFFF.
-     *
-     * @return Color
-     *
-     * @throws GraphicsException
-     */
-    public function colorFromHex(string $hex): Color
-    {
-        if (preg_match('/^\s*#?\s*(?<r>[0-9A-F]{2})(?<g>[0-9A-F]{2})(?<b>[0-9A-F]{2})\s*$/i', $hex, $rgb) === 1) {
-            $r = hexdec($rgb['r']);
-            $g = hexdec($rgb['g']);
-            $b = hexdec($rgb['b']);
-
-            return new Color($this->resource, $r, $g, $b);
-        } else if (preg_match('/^\s*#?\s*(?<a>[0-9A-F]{2})(?<r>[0-9A-F]{2})(?<g>[0-9A-F]{2})(?<b>[0-9A-F]{2})\s*$/i', $hex, $rgb)) {
-            // convert hex alpha to PHP alpha
-            $a = 127 - ceil((127 * hexdec($rgb['a']) / 255));
-            $r = hexdec($rgb['r']);
-            $g = hexdec($rgb['g']);
-            $b = hexdec($rgb['b']);
-
-            return new Color($this->resource, $r, $g, $b, $a);
-        } else
-            throw new GraphicsException('Unable to create color from Hex.');
-    }
-
-    /**
-     * Copy the internal resource as a new resource.
-     *
-     * @resource
-     *
-     * @throws GraphicsException
-     */
-    public function getResourceCopy()
-    {
-        $copy = @imageistruecolor($this->resource) ?
-            @imagecreatetruecolor($this->width, $this->height) :
-            @imagecreate($this->width, $this->height);
-
-        $result = @imagecopy($copy, $this->resource, 0, 0, 0, 0, $this->width, $this->height);
-        if ($result === FALSE)
-            throw new GraphicsException('Unable to copy image.');
-
-        return $copy;
+        return new Image($width, $height, $result, $this->type);
     }
 
     /**
@@ -368,84 +308,194 @@ abstract class Image
      */
     public function round($radius): Image
     {
-        imageantialias($this->resource, TRUE);
-        imagecolortransparent($this->resource, imagecolorallocatealpha($this->resource, 0, 0, 0, 127));
-        imagealphablending($this->resource, TRUE);
-        imagesavealpha($this->resource, FALSE);
+        $corner = Image::blank($radius, $radius);
+        // Fill the image with the base transparent color.
+        @imagefill($corner->resource, 0, 0, Color::Transparent);
+        // Draw a black filled arc.
+        @imagefilledarc($corner->resource, $radius, $radius, $radius * 2, $radius * 2, 180, 270, Color::Black, IMG_ARC_PIE);
+        // Make the black color as transparent (only for $corner). This will make the arc transparent.
+        @imagecolortransparent($corner->resource, Color::Black);
 
-        $corner = self::generateCorner($radius, @imageistruecolor($this->resource));
+        // Add $corner to the corners of the main image.
+
+        // Set the transparent color to the base transparent color.
+        @imagecolortransparent($this->resource, Color::Transparent);
 
         // TOP LEFT
-        @imagecopymerge($this->resource, $corner, 0, 0, 0, 0, $radius, $radius, 100);
+        $this->drawImage($corner);
 
         // TOP RIGHT
-        @imageflip($corner, IMG_FLIP_HORIZONTAL);
-        @imagecopymerge($this->resource, $corner, $this->width - $radius, 0, 0, 0, $radius, $radius, 100);
+        $corner->flipHorizontal();
+        $this->drawImage($corner, $this->width - $radius, 0);
 
         // BOTTOM RIGHT
-        @imageflip($corner, IMG_FLIP_VERTICAL);
-        @imagecopymerge($this->resource, $corner, $this->width - $radius, $this->height - $radius, 0, 0, $radius, $radius, 100);
+        $corner->flipVertical();
+        $this->drawImage($corner, $this->width - $radius, $this->height - $radius);
 
         // BOTTOM LEFT
-        @imageflip($corner, IMG_FLIP_HORIZONTAL);
-        @imagecopymerge($this->resource, $corner, 0, $this->height - $radius, 0, 0, $radius, $radius, 100);
-
-        @imagedestroy($corner);
+        $corner->flipHorizontal();
+        $this->drawImage($corner, 0, $this->height - $radius);
 
         return $this;
     }
 
     /**
-     * Draw text on image.
+     * Mirror an image horizontally.
+     *
+     * @return Image
+     */
+    public function flipHorizontal(): Image
+    {
+        @imageflip($this->resource, IMG_FLIP_HORIZONTAL);
+
+        return $this;
+    }
+
+    /**
+     * Mirror an image vertically.
+     *
+     * @return Image
+     */
+    public function flipVertical(): Image
+    {
+        @imageflip($this->resource, IMG_FLIP_VERTICAL);
+
+        return $this;
+    }
+
+    /**
+     * Draw text.
      *
      * @param string $text
      * @param int $x
      * @param int $y
-     * @param Color $color
+     * @param int $color
      * @param int $font Can be 1, 2, 3, 4, 5 for built-in fonts in latin2 encoding (where higher numbers corresponding to larger fonts).
      *
      * @return Image
      *
      * @throws GraphicsException
      */
-    public function drawText(string $text, int $x, int $y, Color $color, int $font = 1): Image
+    public function drawText(string $text, int $x, int $y, int $color, int $font = 1): Image
     {
-        if (imagestring($this->resource, $font, $x, $y, $text, $color->getId()) === FALSE)
+        if (@imagestring($this->resource, $font, $x, $y, $text, $color) === FALSE)
             throw new GraphicsException('Unable to write text on image.');
 
         return $this;
     }
 
     /**
-     * Output image to the browser.
+     * Draw an image.
      *
-     * @param int $quality
-     */
-    public abstract function output(int $quality = 85): void;
-
-    /**
-     * Initialize image information.
+     * @param Image $image
+     * @param int $x
+     * @param int $y
      *
-     * @param int $width
-     * @param int $height
-     * @param int $type
-     * @param null $resource
+     * @return Image
      *
      * @throws GraphicsException
      */
-    protected function init(int $width, int $height, int $type, $resource = NULL): void
+    public function drawImage(Image $image, int $x = 0, int $y = 0): Image
     {
-        $this->validateWidth($width);
-        $this->validateHeight($height);
+        if (@imagecopy($this->resource, $image->resource, $x, $y, 0, 0, $image->width, $image->height) === FALSE)
+            throw new GraphicsException('Unable to draw image on image.');
 
-        $this->width = $width;
-        $this->height = $height;
-        $this->ratio = $width / $height;
-        $this->type = $type;
+        return $this;
+    }
 
-        if ($this->resource != NULL && is_resource($this->resource) && (@imagedestroy($this->resource) === FALSE))
-            throw new GraphicsException('Unable to destroy image.');
+    /**
+     * Output as BMP.
+     *
+     * @param mixed|NULL $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param bool $compressed
+     *
+     * @return bool
+     */
+    public function asBmp($to = NULL, bool $compressed = TRUE): bool
+    {
+        if ($to == NULL) {
+            if (ob_get_length() !== FALSE)
+                ob_clean();
+            header_remove('Content-Type');
+            header('Content-Type: image/bmp');
+        }
 
-        $this->resource = ($resource == NULL) ? @imagecreatetruecolor($width, $height) : $resource;
+        return @imagebmp($this->resource, $to, $compressed);
+    }
+
+    /**
+     * Output as JPEG.
+     *
+     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param int $quality From 0 (worst quality, smaller file) to 100 (best quality, biggest file).
+     *
+     * @return bool
+     */
+    public function asJpg($to = NULL, int $quality = 75): bool
+    {
+        if ($quality < 0)
+            $quality = 0;
+        else if ($quality > 100)
+            $quality = 100;
+
+        if ($to == NULL) {
+            if (ob_get_length() !== FALSE)
+                ob_clean();
+            header_remove('Content-Type');
+            header('Content-Type: image/jpeg');
+        }
+
+        return @imagejpeg($this->resource, $to, $quality);
+    }
+
+    /**
+     * Output as PNG.
+     *
+     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param int $quality Compression level: from 0 (no compression) to 9 (default).
+     * @param $filters
+     *
+     * @return bool
+     */
+    public function asPng($to = NULL, int $quality = 9, ?int $filters = NULL)
+    {
+        if ($quality < 0)
+            $quality = 0;
+        else if ($quality > 9)
+            $quality = 9;
+
+        if ($to == NULL) {
+            if (ob_get_length() !== FALSE)
+                ob_clean();
+            header_remove('Content-Type');
+            header('Content-Type: image/png');
+        }
+
+        return @imagepng($this->resource, $to, $quality, $filters);
+    }
+
+    /**
+     * Output as WEBP.
+     *
+     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param int $quality From 0 (worst quality, smaller file) to 100 (best quality, biggest file).
+     *
+     * @return bool
+     */
+    public function asWebp($to = NULL, int $quality = 75): bool
+    {
+        if ($quality < 0)
+            $quality = 0;
+        else if ($quality > 100)
+            $quality = 100;
+
+        if ($to == NULL) {
+            if (ob_get_length() !== FALSE)
+                ob_clean();
+            header_remove('Content-Type');
+            header('Content-Type: image/webp');
+        }
+
+        return @imagewebp($this->resource, $to, $quality);
     }
 }
