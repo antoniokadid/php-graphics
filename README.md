@@ -65,4 +65,4 @@ Image::fromFile('test.jpg')
 
 ## LICENSE
 
-php-colors is released under MIT license.
+php-graphics is released under MIT license.
