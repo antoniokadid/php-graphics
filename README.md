@@ -6,7 +6,7 @@ A PHP GD library to process true color images.
 
 ## Installation
 
-composer require antoniokadid/php-graphics
+composer require antoniokadid/php-graphics:dev-master
 
 ## Requirements
 * PHP 7.1
