@@ -1,6 +1,6 @@
 {
     "name": "antoniokadid/php-graphics",
-    "description": "A library for easier image processing.",
+    "description": "A PHP WYSIWYG GD library to process true color images.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Graphics\\": "src/"
+            "AntonioKadid\\Graphics\\": "src/"
         }
     }
 }

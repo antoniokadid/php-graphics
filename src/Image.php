@@ -1,13 +1,13 @@
 <?php
 
-namespace Graphics;
+namespace AntonioKadid\Graphics;
 
 use InvalidArgumentException;
 
 /**
  * Class Image
  *
- * @package Graphics
+ * @package AntonioKadid\Graphics
  */
 class Image
 {

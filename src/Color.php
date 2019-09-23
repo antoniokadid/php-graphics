@@ -1,6 +1,6 @@
 <?php
 
-namespace Graphics;
+namespace AntonioKadid\Graphics;
 
 use InvalidArgumentException;
 
@@ -9,7 +9,7 @@ use InvalidArgumentException;
  *
  * Only for true color images.
  *
- * @package Graphics
+ * @package AntonioKadid\Graphics
  */
 class Color
 {

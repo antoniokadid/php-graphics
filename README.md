@@ -1,8 +1,8 @@
 # php-graphics
 
-A PHP GD library to process true color images.
+A PHP WYSIWYG GD library to process true color images.
 
-*Project under development.*
+*Project under development and may be heavily change. Use at your own risk.*
 
 ## Installation
 

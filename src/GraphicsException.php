@@ -1,13 +1,13 @@
 <?php
 
-namespace Graphics;
+namespace AntonioKadid\Graphics;
 
 use Throwable;
 
 /**
  * Class GraphicsException
  *
- * @package Graphics
+ * @package AntonioKadid\Graphics
  */
 class GraphicsException extends \Exception
 {
