@@ -6,7 +6,7 @@ A PHP WYSIWYG GD library to process true color images.
 
 ## Installation
 
-composer require antoniokadid/php-graphics:dev-master
+composer require antoniokadid/php-graphics
 
 ## Requirements
 * PHP 7.1
