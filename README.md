@@ -1,5 +1,5 @@
 # WAPPKit Core - Graphics
-A library to process true color images.
+A PHP library to process true color images.
 
 Part of Web Application Kit (WAPPKit) Core which powers WAPPKit, a privately owned CMS.
 

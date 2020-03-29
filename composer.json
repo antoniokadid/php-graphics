@@ -1,6 +1,6 @@
 {
     "name": "antoniokadid/wappkit-core-graphics",
-    "description": "A library to process true color images.",
+    "description": "A PHP library to process true color images.",
     "type": "library",
     "license": "MIT",
     "authors": [
