@@ -1,12 +1,13 @@
-# php-graphics
+# WAPPKit Core - Graphics
+A library to process true color images.
 
-A PHP WYSIWYG GD library to process true color images.
+Part of Web Application Kit (WAPPKit) Core which powers WAPPKit, a privately owned CMS.
 
-*Project under development and may be heavily change. Use at your own risk.*
+*Project under development and may be subject to a lot of changes. Use at your own risk.*
 
 ## Installation
 
-composer require antoniokadid/php-graphics
+composer require antoniokadid/wappkit-core-graphics
 
 ## Requirements
 * PHP 7.1
@@ -27,18 +28,18 @@ composer require antoniokadid/php-graphics
   * JPEG
   * BMP
   * PNG
-* Method chaining.
 
 #### Colors
 * Create color from RGB, ARGB, RGBA and HEX.
 * HTML colors as constants with valid GD color index (true color images only).
-
 
 ## Examples
 
 ##### Resize an image
 
 ```php
+use AntonioKadid\WAPPKitCore\Graphics\Image;
+
 // Load test.jpg resize it with width 200 pixels and adjust height automatically.
 Image::fromFile('test.jpg')
     ->resizeToWidth(200)
@@ -58,6 +59,8 @@ Image::fromFile('test.jpg')
 ##### Crop an image
 
 ```php
+use AntonioKadid\WAPPKitCore\Graphics\Image;
+
 Image::fromFile('test.jpg')
     ->crop(50, 50)
     ->asJpg();
@@ -65,4 +68,4 @@ Image::fromFile('test.jpg')
 
 ## LICENSE
 
-php-graphics is released under MIT license.
+MIT license.

@@ -1,7 +1,8 @@
 <?php
 
-namespace AntonioKadid\Graphics;
+namespace AntonioKadid\WAPPKitCore\Graphics;
 
+use AntonioKadid\WAPPKitCore\Graphics\Exceptions\GraphicsException;
 use InvalidArgumentException;
 
 /**
@@ -9,7 +10,7 @@ use InvalidArgumentException;
  *
  * Only for true color images.
  *
- * @package AntonioKadid\Graphics
+ * @package AntonioKadid\WAPPKitCore\Graphics
  */
 class Color
 {
@@ -169,9 +170,9 @@ class Color
     /**
      * Color constructor.
      *
-     * @param int $red Can be between 0 and 255.
-     * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
+     * @param int      $red   Can be between 0 and 255.
+     * @param int      $green Can be between 0 and 255.
+     * @param int      $blue  Can be between 0 and 255.
      * @param int|NULL $alpha Can be between 0 and 255 or NULL.
      */
     public function __construct(int $red, int $green, int $blue, ?int $alpha = NULL)
@@ -196,9 +197,9 @@ class Color
      * Create a new color based on ARGB format.
      *
      * @param int $alpha Can be between 0 and 255.
-     * @param int $red Can be between 0 and 255.
+     * @param int $red   Can be between 0 and 255.
      * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
+     * @param int $blue  Can be between 0 and 255.
      *
      * @return Color
      */
@@ -210,9 +211,9 @@ class Color
     /**
      * Create a new color based on RGB format.
      *
-     * @param int $red Can be between 0 and 255.
+     * @param int $red   Can be between 0 and 255.
      * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
+     * @param int $blue  Can be between 0 and 255.
      *
      * @return Color
      */
@@ -224,9 +225,9 @@ class Color
     /**
      * Create a new color based on RGBA format.
      *
-     * @param int $red Can be between 0 and 255.
-     * @param int $green Can be between 0 and 255.
-     * @param int $blue Can be between 0 and 255.
+     * @param int   $red   Can be between 0 and 255.
+     * @param int   $green Can be between 0 and 255.
+     * @param int   $blue  Can be between 0 and 255.
      * @param float $alpha Can be between 0 and 1. 0 transparent and 1 opaque.
      *
      * @return Color

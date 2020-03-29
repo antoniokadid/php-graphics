@@ -1,6 +1,6 @@
 {
-    "name": "antoniokadid/php-graphics",
-    "description": "A PHP WYSIWYG GD library to process true color images.",
+    "name": "antoniokadid/wappkit-core-graphics",
+    "description": "A library to process true color images.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -15,9 +15,21 @@
         "php": ">=7.1",
         "ext-gd": "*"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
     "autoload": {
         "psr-4": {
-            "AntonioKadid\\Graphics\\": "src/"
+            "AntonioKadid\\WAPPKitCore\\Graphics\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AntonioKadid\\WAPPKitCore\\Graphics\\": "src/",
+            "AntonioKadid\\WAPPKitCore\\Tests\\Graphics\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit --testdox tests"
     }
 }

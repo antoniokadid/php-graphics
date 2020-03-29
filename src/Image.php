@@ -1,13 +1,14 @@
 <?php
 
-namespace AntonioKadid\Graphics;
+namespace AntonioKadid\WAPPKitCore\Graphics;
 
+use AntonioKadid\WAPPKitCore\Graphics\Exceptions\GraphicsException;
 use InvalidArgumentException;
 
 /**
  * Class Image
  *
- * @package AntonioKadid\Graphics
+ * @package AntonioKadid\WAPPKitCore\Graphics
  */
 class Image
 {
@@ -25,10 +26,10 @@ class Image
     /**
      * Image constructor.
      *
-     * @param int $width
-     * @param int $height
+     * @param int           $width
+     * @param int           $height
      * @param resource|NULL $resource
-     * @param int $type
+     * @param int           $type
      */
     public function __construct(int $width = 0, int $height = 0, $resource = NULL, int $type = IMAGETYPE_UNKNOWN)
     {
@@ -56,44 +57,6 @@ class Image
         @imagesavealpha($this->resource, TRUE);
     }
 
-    public function __destruct()
-    {
-        if (is_resource($this->resource))
-            @imagedestroy($this->resource);
-    }
-
-    /**
-     * @return int
-     */
-    public function getWidth(): int
-    {
-        return $this->width;
-    }
-
-    /**
-     * @return int
-     */
-    public function getHeight(): int
-    {
-        return $this->height;
-    }
-
-    /**
-     * @return float
-     */
-    public function getRatio(): float
-    {
-        return $this->ratio;
-    }
-
-    /**
-     * @return int
-     */
-    public function getType(): int
-    {
-        return $this->type;
-    }
-
     /**
      * Create a new blank image.
      *
@@ -111,7 +74,7 @@ class Image
     /**
      * Use an existing resource as an image.
      *
-     * @param $resource
+     * @param     $resource
      * @param int $type
      *
      * @return Image
@@ -178,6 +141,44 @@ class Image
         return new Image($width, $height, $resource, $type);
     }
 
+    public function __destruct()
+    {
+        if (is_resource($this->resource))
+            @imagedestroy($this->resource);
+    }
+
+    /**
+     * @return int
+     */
+    public function getWidth(): int
+    {
+        return $this->width;
+    }
+
+    /**
+     * @return int
+     */
+    public function getHeight(): int
+    {
+        return $this->height;
+    }
+
+    /**
+     * @return float
+     */
+    public function getRatio(): float
+    {
+        return $this->ratio;
+    }
+
+    /**
+     * @return int
+     */
+    public function getType(): int
+    {
+        return $this->type;
+    }
+
     /**
      * @return Image
      *
@@ -231,7 +232,6 @@ class Image
 
         return $this->resize($width, $height);
     }
-
 
     /**
      * Resize an image to the specified height and keep the ratio between width and height.
@@ -367,10 +367,10 @@ class Image
      * Draw text.
      *
      * @param string $text
-     * @param int $x
-     * @param int $y
-     * @param int $color
-     * @param int $font Can be 1, 2, 3, 4, 5 for built-in fonts in latin2 encoding (where higher numbers corresponding to larger fonts).
+     * @param int    $x
+     * @param int    $y
+     * @param int    $color
+     * @param int    $font Can be 1, 2, 3, 4, 5 for built-in fonts in latin2 encoding (where higher numbers corresponding to larger fonts).
      *
      * @return Image
      *
@@ -388,8 +388,8 @@ class Image
      * Draw an image.
      *
      * @param Image $image
-     * @param int $x
-     * @param int $y
+     * @param int   $x
+     * @param int   $y
      *
      * @return Image
      *
@@ -407,7 +407,7 @@ class Image
      * Output as BMP.
      *
      * @param mixed|NULL $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
-     * @param bool $compressed
+     * @param bool       $compressed
      *
      * @return bool
      */
@@ -426,8 +426,8 @@ class Image
     /**
      * Output as JPEG.
      *
-     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
-     * @param int $quality From 0 (worst quality, smaller file) to 100 (best quality, biggest file).
+     * @param mixed|null $to      The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param int        $quality From 0 (worst quality, smaller file) to 100 (best quality, biggest file).
      *
      * @return bool
      */
@@ -451,9 +451,9 @@ class Image
     /**
      * Output as PNG.
      *
-     * @param mixed|null $to The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
-     * @param int $quality Compression level: from 0 (no compression) to 9 (default).
-     * @param $filters
+     * @param mixed|null $to      The path to save the file to. If not set or &null;, the raw image stream will be outputted directly.
+     * @param int        $quality Compression level: from 0 (no compression) to 9 (default).
+     * @param            $filters
      *
      * @return bool
      */
