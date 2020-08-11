@@ -7,7 +7,7 @@ Part of Web Application Kit (WAPPKit) Core which powers WAPPKit, a privately own
 
 ## Installation
 
-composer require antoniokadid/wappkit-core-graphics:dev-master
+composer require antoniokadid/wappkit-core-graphics
 
 ## Requirements
 * PHP 7.1
